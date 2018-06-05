@@ -69,7 +69,7 @@ foreach (DataRowView drv_iterator in edvOrderDtl.dataView)
   string orderNum = drv["OrderNum"].ToString();
   string orderLine = drv["OrderLine"].ToString();
   if (drv != null)
-	{
+  {
     edvOrderRel.dataView.RowFilter = "OrderNum = orderNum and OrderLine = orderLine";				
   }
 }
