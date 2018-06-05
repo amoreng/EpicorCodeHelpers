@@ -62,3 +62,14 @@ dataTable.Rows.Add(defaultRow);
 edvCustomView.dataView = dataTable.DefaultView;
 oTrans.Add("ViewName", edvCustomView);
 
+//filter an EpiDataView with variables. Uses SQL-like syntax
+foreach (DataRowView drv_iterator in edvOrderDtl.dataView)
+{	
+  DataRowView drv = drv_iterator;
+  string orderNum = drv["OrderNum"].ToString();
+  string orderLine = drv["OrderLine"].ToString();
+  if (drv != null)
+	{
+    edvOrderRel.dataView.RowFilter = "OrderNum = orderNum and OrderLine = orderLine";				
+  }
+}
