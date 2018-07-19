@@ -45,3 +45,34 @@ Erp.UI.Controls.Combos.InspectrCombo cmb = (Erp.UI.Controls.Combos.InspectrCombo
 cmb.Focus();
 
 
+//UltraGrid Read Only Techniques
+//This loops through all columns in the band and de-activates if the visible position is the first one
+foreach(var col in grdAllocations.DisplayLayout.Bands[0].Columns)
+{				
+
+  if(col.Header.VisiblePosition != 1)
+  {
+    col.CellActivation = Activation.Disabled;	
+  }			
+}
+//this loops through the bands and inactives the entire band. I had little luck using the captions to filter
+foreach(var col in grdAllocations.DisplayLayout.Bands)
+{
+  //!col.Header.Caption.ToUpper().Contains("Allocate")
+  //MessageBox.Show("VP: " + col.Header.VisiblePosition.ToString()+ "\n" + "Name: " +col.Header.Caption.ToString());
+  if(col.Header.VisiblePosition != 1)
+  {					
+    col.Override.AllowUpdate = DefaultableBoolean.False;
+  }			
+}
+
+//this sets the column read only property on the datatable level before binding to a grid
+//again, I used the ordinal not the caption to filter
+foreach(DataColumn c in mergedDataSet.Tables[0].Columns)	
+{			
+  //msg += "P: " + c.Ordinal.ToString()+  " Caption: " +c.Caption.ToString() + " ColumnName: " + c.ColumnName.ToString() + "\n";
+  if(c.Ordinal != 14)
+  {	
+    c.ReadOnly = true; 		
+  }	
+}
