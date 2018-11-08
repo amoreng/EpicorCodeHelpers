@@ -73,3 +73,8 @@ foreach (DataRowView drv_iterator in edvOrderDtl.dataView)
     edvOrderRel.dataView.RowFilter = "OrderNum = orderNum and OrderLine = orderLine";				
   }
 }
+//check that there is an index
+if(this.edvQuoteDtl.Row >-1)
+{
+  //do something
+}
