@@ -9,7 +9,17 @@ using Ice/Erp.Adapters;
 using Ice/Erp.BO;
 
 /*Examples*/
-
+//Use ShipTo Adapter and loop thru results of a GetByID method
+ShipToAdapter adapterShipTo = new ShipToAdapter(oTrans);
+adapterShipTo.BOConnect();
+bool result = adapterShipTo.GetByID(custNum, shipToCustNum);
+if(result)
+{
+   foreach(var row in adapterShipTo.ShipToData.ShipTo.Rows)
+   {
+      //do something
+   }
+}
 //Instantiate and use UD05 adapter
 UD05Adapter adapterUD05 = new UD05Adapter(oTrans);			
 adapterUD05.BOConnect();
