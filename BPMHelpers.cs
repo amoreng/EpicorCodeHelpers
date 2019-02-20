@@ -45,3 +45,33 @@ RMADisp = (from RMADisp_row in Db.RMADisp
 	&& RMADisp_row.RMALine == callContextBpmData.Number02
     select RMADisp_row).FirstOrDefault();
 
+//Set up an iterator to loop thru results of query
+Erp.Tables.OrderDtl OrderDtl;
+Erp.Tables.QuoteDtl QuoteDtl;
+
+int LineNum = 1; 
+if (orderNum != 0)
+{
+foreach (var QuoteDtl_iterator in 
+	(from QuoteDtl_Row in Db.QuoteDtl
+   where QuoteDtl_Row.Company == Session.CompanyID && 
+	 QuoteDtl_Row.QuoteNum == callContextBpmData.Number01
+	 select QuoteDtl_Row))
+ 
+	{
+		QuoteDtl = QuoteDtl_iterator;
+    OrderDtl = (from OrderDtl_Row in Db.OrderDtl
+    where OrderDtl_Row.Company == Session.CompanyID &&
+    OrderDtl_Row.OrderNum == orderNum &&
+    OrderDtl_Row.OrderLine == LineNum
+    select OrderDtl_Row).FirstOrDefault();
+
+        if (OrderDtl != null)
+        {
+            OrderDtl["DrawNumFromQuote_c"] = (string)QuoteDtl["DrawNum"];
+            //Db.OrderDtl.Update(OrderDtl);
+						LineNum++;
+        }
+	
+   }
+}
