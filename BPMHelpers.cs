@@ -75,3 +75,71 @@ foreach (var QuoteDtl_iterator in
 	
    }
 }
+
+
+
+/*Join several tables with Linq*/
+/*Send Follow Up Reminder if QuoteHed.FollowUpDate = Today*/
+/*Dictionary queue holds to-be-send emails*/
+Dictionary<int, string> queue = new Dictionary<int, string>();
+
+foreach(var quote in (from q in Db.QuoteHed.With(LockHint.NoLock)
+                              
+                    /*Join QSalesRp, get Prime Rep*/
+                    join r in Db.QSalesRP.With(LockHint.NoLock)
+                      on new { q.Company, q.QuoteNum } equals new { r.Company, r.QuoteNum }
+                      
+                    /*Join SalesRp to QSalesRP, get EmailAddress*/
+                    join s in Db.SalesRep.With(LockHint.NoLock)
+                      on new {r.Company, r.SalesRepCode} equals new {s.Company, s.SalesRepCode}
+                      
+                    where
+                    q.Company == Session.CompanyID 
+                    && q.FollowUpDate == DateTime.Today
+                    && r.PrimeRep == true
+                   
+                    select new {
+                      q.QuoteNum, q.FollowUpDate, s.EMailAddress
+                      }
+                    ))
+                    /*Start Iteration*/
+                    {
+                      if(quote != null)
+                      {
+                        queue.Add(quote.QuoteNum, quote.EMailAddress);
+                      }
+                    }
+                    /*End Interation*/
+/*If queue has any entries, we will create a Mailer class and send out emails to that person*/                    
+if(queue.Any())
+{
+  foreach(var row in queue)
+  {
+    //debug testing
+    string path = @"\\<server>\C$\Temp\DictionaryContents.txt"; 
+    string content = string.Format("Key: {0}, Value: {1}", row.Key, row.Value);
+     if(!File.Exists(path))
+     {
+     // Create a file to write to.
+      string createText = "First Line:" + Environment.NewLine;
+    File.WriteAllText(path, createText);
+     }
+     string appendText = Environment.NewLine + "Response: "+DateTime.Now.ToString() + Environment.NewLine + content;
+     File.AppendAllText(path, appendText); 
+     
+  }
+}   
+else
+{
+   //debug testing
+string path = @"\\<server>\C$\Temp\DictionaryContents.txt"; 
+string content = string.Format("No Dictionary Values. DateVar = {0}", DateTime.Today.ToString());
+ if(!File.Exists(path))
+ {
+ // Create a file to write to.
+  string createText = "First Line:" + Environment.NewLine;
+File.WriteAllText(path, createText);
+ }
+ string appendText = Environment.NewLine + "Response: "+DateTime.Now.ToString() + Environment.NewLine + content;
+ File.AppendAllText(path, appendText); 
+} 
