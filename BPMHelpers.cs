@@ -81,11 +81,11 @@ foreach (var QuoteDtl_iterator in
 /*Join several tables with Linq*/
 /*Send Follow Up Reminder if QuoteHed.FollowUpDate = Today*/
 /*Dictionary queue holds to-be-send emails*/
-Dictionary<int, string> queue = new Dictionary<int, string>();
+Dictionary<int, object[]> queue = new Dictionary<int, object[]>();
 
 foreach(var quote in (from q in Db.QuoteHed.With(LockHint.NoLock)
                               
-                    /*Join QSalesRp, get Prime Rep*/
+                    /*Join QSalesRp, get SalesRepCode*/
                     join r in Db.QSalesRP.With(LockHint.NoLock)
                       on new { q.Company, q.QuoteNum } equals new { r.Company, r.QuoteNum }
                       
@@ -93,30 +93,35 @@ foreach(var quote in (from q in Db.QuoteHed.With(LockHint.NoLock)
                     join s in Db.SalesRep.With(LockHint.NoLock)
                       on new {r.Company, r.SalesRepCode} equals new {s.Company, s.SalesRepCode}
                       
+                    /*Join Customer to QuoteHed, get Name*/
+                    join c in Db.Customer.With(LockHint.NoLock)
+                      on new {q.Company, q.CustNum} equals new {c.Company, c.CustNum}
+                      
                     where
                     q.Company == Session.CompanyID 
                     && q.FollowUpDate == DateTime.Today
                     && r.PrimeRep == true
                    
                     select new {
-                      q.QuoteNum, q.FollowUpDate, s.EMailAddress
+                      q.QuoteNum, q.FollowUpDate, s.EMailAddress, c.Name
                       }
                     ))
-                    /*Start Iteration*/
+                    /*Start Iteration Action*/
                     {
                       if(quote != null)
                       {
-                        queue.Add(quote.QuoteNum, quote.EMailAddress);
+                        queue.Add(quote.QuoteNum, new object[] {quote.EMailAddress, quote.FollowUpDate, quote.Name});
                       }
                     }
-                    /*End Interation*/
-/*If queue has any entries, we will create a Mailer class and send out emails to that person*/                    
+                    /*End Interation Action*/
+/*If queue has any entries, we will create a Epicor Mailer class and send out emails to that person*/        
+/*Value is an object array. Access contents by index*/
 if(queue.Any())
 {
   foreach(var row in queue)
   {
     //debug testing
-    string path = @"\\<server>\C$\Temp\DictionaryContents.txt"; 
+    /*string path = @"\\<server>\C$\Temp\DictionaryContents.txt"; 
     string content = string.Format("Key: {0}, Value: {1}", row.Key, row.Value);
      if(!File.Exists(path))
      {
@@ -126,20 +131,43 @@ if(queue.Any())
      }
      string appendText = Environment.NewLine + "Response: "+DateTime.Now.ToString() + Environment.NewLine + content;
      File.AppendAllText(path, appendText); 
-     
+     */
+     //Mailer Helpers
+     var mailer = this.GetMailer(async: true); 
+     var message = new Ice.Mail.SmtpMail();
+     message.SetFrom("alerts@jrfortho.org");
+     message.SetTo(row.Value[0].ToString());
+     //message.SetCC()
+     //message.SetBcc() 
+     
+     DateTime rawDate = (DateTime)row.Value[1];
+     var trimDate = rawDate.ToShortDateString();
+     string rawBody = string.Format("Quote Follow Up Date set for {0} has been reached for Quote {1} for Customer {2}.", trimDate,row.Key.ToString(), row.Value[2].ToString());
+     string htmlWrapperStart = "<html><body><p>";
+     string htmlWrapperEnd = "</p></body></html>";
+     string finalBody = string.Format("{0}{1}{2}", htmlWrapperStart, rawBody, htmlWrapperEnd);
+     
+     message.SetBody(finalBody);
+     message.Subject = string.Format("Follow Up Reminder: Quote {0}", row.Key.ToString());
+     //Dictionary<string, string> attachments = new Dictionary<string, string>();
+     //attachments.Add("MyFirstAttachment", @"\\MyServer\myFolder\MyFile.pdf");
+     mailer.Send(message);
   }
+  queue.Clear();
 }   
 else
 {
-   //debug testing
-string path = @"\\<server>\C$\Temp\DictionaryContents.txt"; 
-string content = string.Format("No Dictionary Values. DateVar = {0}", DateTime.Today.ToString());
- if(!File.Exists(path))
- {
- // Create a file to write to.
-  string createText = "First Line:" + Environment.NewLine;
-File.WriteAllText(path, createText);
- }
- string appendText = Environment.NewLine + "Response: "+DateTime.Now.ToString() + Environment.NewLine + content;
- File.AppendAllText(path, appendText); 
+  /*
+  //debug testing
+  string path = @"\\<server>\C$\Temp\BPMDebugger.txt";
+  string content = string.Format("No Dictionary Values. DateVar = {0}", DateTime.Today.ToString());
+   if(!File.Exists(path))
+   {
+   // Create a file to write to.
+    string createText = "First Line:" + Environment.NewLine;
+  File.WriteAllText(path, createText);
+   }
+   string appendText = Environment.NewLine + "Response: "+DateTime.Now.ToString() + Environment.NewLine + content;
+   File.AppendAllText(path, appendText); 
+ */
 } 
