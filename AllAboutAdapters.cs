@@ -251,33 +251,33 @@ var adapterInsp = ((InspProcessingAdapter)(this.csm.TransAdaptersHT["oTrans_insp
                               
 //using the BOReader to access a Business Object
 if (dtInput.Rows.Count>0)
+{
+	using(BOReaderImpl boReader = WCFServiceSupport.CreateImpl<Ice.Proxy.Lib.BOReaderImpl>((Session)oTrans.Session, Epicor.ServiceModel.Channels.ImplBase<Ice.Contracts.BOReaderSvcContract>.UriPath))
+	{
+
+		foreach (DataRow dr in dtInput.Rows)
 		{
-			using(BOReaderImpl boReader = WCFServiceSupport.CreateImpl<Ice.Proxy.Lib.BOReaderImpl>((Session)oTrans.Session, Epicor.ServiceModel.Channels.ImplBase<Ice.Contracts.BOReaderSvcContract>.UriPath))
+			adapterUD100.BOConnect();
+
+			string donorNum = dr["Donor"].ToString();
+			string whereClause = string.Format("Key1 like '{0}-%'", donorNum);	
+			//MessageBox.Show(whereClause);				
+		//find related UD100 records and update them on substring(Key1,0,7) = DonorNum and update UD100.Character04 to OPOAgency and UD100.Character05 to OPODonorNum
+
+			var dsBOReader = boReader.GetList("Ice:BO:UD100", whereClause, "");
+			int rowCount = dsBOReader.Tables[0].Rows.Count;
+			if(dsBOReader.Tables[0].Rows.Count>0)
 			{
-				
-				foreach (DataRow dr in dtInput.Rows)
+				//MessageBox.Show(dsUD100.Tables[0].Rows[rowCount-1]["Key2"].ToString());
+				//build out data structure for UD100 mass update
+				//foreach
 				{
-					adapterUD100.BOConnect();
-					
-					string donorNum = dr["Donor"].ToString();
-					string whereClause = string.Format("Key1 like '{0}-%'", donorNum);	
-					//MessageBox.Show(whereClause);				
-			    	//find related UD100 records and update them on substring(Key1,0,7) = DonorNum and update UD100.Character04 to OPOAgency and UD100.Character05 to OPODonorNum
-					
-					var dsBOReader = boReader.GetList("Ice:BO:UD100", whereClause, "");
-					int rowCount = dsBOReader.Tables[0].Rows.Count;
-					if(dsBOReader.Tables[0].Rows.Count>0)
-					{
-						//MessageBox.Show(dsUD100.Tables[0].Rows[rowCount-1]["Key2"].ToString());
-						//build out data structure for UD100 mass update
-						//foreach
-						{
-							rowCount++;
-						}
-					}
-					//update here
-					
-					adapterUD100.Dispose();
+					rowCount++;
 				}
-			}			
+			}
+			//update here
+
+			adapterUD100.Dispose();
 		}
+	}			
+}
