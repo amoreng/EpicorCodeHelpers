@@ -76,6 +76,34 @@ foreach (var QuoteDtl_iterator in
    }
 }
 
+//Invoking an Epicor WCF Service via the Service Renderer class
+/*Invoke CheckDtlLotInfo Method*/
+string questionMsg = string.Empty;
+string errorMsg = string.Empty;
+Erp.Tablesets.ReceiptTableset dsRef = ds;
+using(Erp.Contracts.ReceiptSvcContract receiptSvc = Ice.Assemblies.ServiceRenderer.GetService<Erp.Contracts.ReceiptSvcContract>(Db))
+{
+  /*var rcpt = (from receipt in Db.RcvDtl.Where(r=>r.Company == Session.CompanyID && r.PONum == callContextBpmData.Number01 && r.PackSlip == (string)packSlip && r.POLine == (int)poLine) select receipt).FirstOrDefault(); */
+
+
+    
+   //dsRef = receiptSvc.GetByID(vendorNum,purPoint,packSlip);
+    receiptSvc.CheckDtlLotInfo(
+                 ref dsRef
+                 ,vendorNum    
+                 ,purPoint
+                 ,packSlip
+                 ,packLine 
+                 ,lotNum
+                 ,out questionMsg
+                 ,out errorMsg
+      );
+  
+      string body = "Here I am"; 
+  this.PublishInfoMessage(body,Ice.Common.BusinessObjectMessageType.Information, Ice.Bpm.InfoMessageDisplayMode.Individual, "Receipt", "GetDtlPOLineInfo");   
+ 
+}
+
 
 
 /*Join several tables with Linq*/
