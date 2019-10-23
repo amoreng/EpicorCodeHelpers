@@ -199,3 +199,36 @@ else
    File.AppendAllText(path, appendText); 
  */
 } 
+
+//uBAQ with updatable calculated fields and using advanced BPM processing with a base update method, create a sales order from inputs
+/*Create Order from Inputs*/
+
+using(Erp.Contracts.SalesOrderSvcContract orderSvc = Ice.Assemblies.ServiceRenderer.GetService<Erp.Contracts.SalesOrderSvcContract>(Db))
+{
+  //access input fires with ttResults table, index and field name. 
+  //prepare input
+  var soldToCustNum = (int)ttResults[0]["Calculated_SoldToCustNum"];
+  var BTCustNum = (int)ttResults[0]["Calculated_BTCustNum"];
+  var shipToCustNum = (int)ttResults[0]["Calculated_ShipToCustNum"];
+  var shipToNum = (string)ttResults[0]["Calculated_ShipToNum"];
+  var needByDate = (DateTime)ttResults[0]["Calculated_NeedByDate"];
+  var poNum = (string)ttResults[0]["Calculated_PONum"];
+  
+  //prepare orderhed calls
+  Erp.Tablesets.SalesOrderTableset orderTS = new Erp.Tablesets.SalesOrderTableset();  
+  
+  /*Create OrderHed*/
+  orderSvc.GetNewOrderHed(ref orderTS);
+  orderTS.OrderHed[0].CustNum = soldToCustNum;
+  orderTS.OrderHed[0].BTCustNum = BTCustNum;
+  orderTS.OrderHed[0].ShipToCustNum = shipToCustNum;
+  orderTS.OrderHed[0].ShipToNum = shipToNum;
+  orderTS.OrderHed[0].TermsCode = "N30";
+  orderTS.OrderHed[0].PONum = poNum;
+  orderTS.OrderHed[0].NeedByDate = needByDate;
+  
+  orderSvc.Update(ref orderTS);
+  
+  ttResults[0]["Calculated_OrderNum"] = orderTS.OrderHed[0].OrderNum; //report back to user
+  
+ }
