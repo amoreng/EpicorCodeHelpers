@@ -232,3 +232,58 @@ using(Erp.Contracts.SalesOrderSvcContract orderSvc = Ice.Assemblies.ServiceRende
   ttResults[0]["Calculated_OrderNum"] = orderTS.OrderHed[0].OrderNum; //report back to user
   
  }
+
+//Iterate thru quote dtl recs and delete
+var parameters = new Ice.Core.TaskParameterInformation(this.Db, taskNum);
+var quoteNum = Convert.ToInt32(parameters.GetCharacterValue("TxtParam1"));
+var quoteLine = Convert.ToInt32(parameters.GetCharacterValue("TxtParam2"));
+
+//lookup quote and iterate
+//make sure to add Ice.Core.TaskBase and Erp.Data.910100 if accessing the parameters
+using(Erp.Contracts.QuoteSvcContract quoteSvc = Ice.Assemblies.ServiceRenderer.GetService<Erp.Contracts.QuoteSvcContract>(Db))
+{
+    //get your quotedata
+    var ts = quoteSvc.GetByID(quoteNum);
+    if(ts.QuoteDtl!=null)
+    {
+    //loop thru toQuoteDtl find your lines you want to delete
+      foreach(var line in ts.QuoteDtl)
+      {
+        if(line.QuoteLine == quoteLine)
+          {
+              //mark line for delete
+              line.RowMod = "D";           
+          }
+      }
+      //QuoteCoParts
+      foreach(var line in ts.QuoteCoPart)
+      {
+        if(line.QuoteLine == quoteLine)
+          {
+              //mark line for delete
+              line.RowMod = "D";           
+          }
+      }
+      
+      //QuoteQty
+      foreach(var line in ts.QuoteQty)
+      {
+        if(line.QuoteLine == quoteLine)
+          {
+              //mark line for delete
+              line.RowMod = "D";           
+          }
+      }
+      
+      //Qtmmkup
+      foreach(var line in ts.Qtmmkup)
+      {
+        if(line.QuoteLine == quoteLine)
+          {
+              //mark line for delete
+              line.RowMod = "D";           
+          }
+      }
+      quoteSvc.Update(ref ts);
+      }
+}
